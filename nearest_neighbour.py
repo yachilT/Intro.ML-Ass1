@@ -4,7 +4,7 @@ from scipy.spatial import distance
 
 def gensmallm(x_list: list, y_list: list, m: int):
     """
-    gensmallm generates a random sample of size m along side its labels.
+    gensmallm generates a random sample of size m along side its labels..
 
     :param x_list: a list of numpy arrays, one array for each one of the labels
     :param y_list: a list of the corresponding labels, in the same order as x_list
