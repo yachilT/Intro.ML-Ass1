@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.spatial import distance
 import matplotlib.pyplot as plt
+from joblib import Parallel, delayed
+
 
 class Classifier:
     def __init__(self, k, x_train: np.array, y_train: np.array):
@@ -14,6 +16,8 @@ class Classifier:
         k_indices = indices[:self.k]
         k_labels = self.y_train[k_indices].astype('int64')
         return np.argmax(np.bincount(k_labels))
+
+
 
 
 def gensmallm(x_list: list, y_list: list, m: int):
@@ -119,6 +123,13 @@ def simple_test():
 
     # this line should print the classification of the i'th test sample.
     print(f"The {i}'th test sample was classified as {preds[i]}")
+
+
+def compute_error(k, X, y, x_test, y_test):
+    classifier = learnknn(k, X, y)
+    preds = predictknn2(classifier, x_test)
+    return np.mean(preds != y_test)
+
 
 
 def plot_error_vs_k(data, digits):
