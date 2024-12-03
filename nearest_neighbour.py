@@ -127,7 +127,7 @@ def simple_test():
 
 def compute_error(k, X, y, x_test, y_test):
     classifier = learnknn(k, X, y)
-    preds = predictknn2(classifier, x_test)
+    preds =  predictknn2(classifier, x_test).flatten()
     return np.mean(preds != y_test)
 
 
