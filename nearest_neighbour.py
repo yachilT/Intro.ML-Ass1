@@ -125,33 +125,27 @@ def simple_test():
     print(f"The {i}'th test sample was classified as {preds[i]}")
 
 
-def compute_error(k, X, y, x_test, y_test):
+def compute_error(k, m, x_test, y_test, corrupted=False):
+    X, y = gensmallm([data[f'train{k}'] for k in digits], digits, m)
+    y = corrupt(y) if corrupted else y
     classifier = learnknn(k, X, y)
     preds =  predictknn2(classifier, x_test).flatten()
     return np.mean(preds != y_test)
 
 
 
-def plot_error_vs_k(data, digits):
 
+def plot_error_vs_k(data, digits):
     (x_test, y_test) = get_tests([data[f'test{k}'] for k in digits], digits)
-    (X, y) = gensmallm([data[f'train{k}'] for k in digits], digits, 200)
     errors = []
     for k in range(1, 11):
-        error = 0
-        # for _ in range(10): # average over 10 runs
-        #     classifier = learnknn(k, X, y)
-        #     preds = predictknn2(classifier, x_test)
-        #     error += 0.1 * np.mean(preds != y_test)
-        # errors = np.append(errors, error)
-
-        # Compute errors for 10 runs and store their average
-        error_runs = [compute_error(k, X, y, x_test, y_test) for _ in range(10)]
+        error_runs = [compute_error(k, 200, x_test, y_test) for _ in range(10)]
         avg_error = np.mean(error_runs)
         errors.append(avg_error)
         print(f"k = {k}, Avg Error: {avg_error:.4f}")
 
     plt.plot(range(1, 11), errors)
+    plt.ylim(0, 1)
     plt.xlabel('k')
     plt.ylabel('Average Test Error')
     plt.title('Average Test Error vs. k')
@@ -166,26 +160,67 @@ def plot_error_vs_m(data ,digits):
     max_errors = np.array([])
     min_errors = np.array([])
     (x_test, y_test) = get_tests([data[f'test{k}'] for k in digits], digits)
-    for i in range(1, 100, 25):
-        error = np.array([])
-        for j in range(10):
-            (X, Y) = gensmallm([data[f'train{k}'] for k in digits], digits, i)
-            classifier = learnknn(1, X, Y)
-
-            preds = predictknn(classifier, x_test)
-            error = np.append(error, [np.mean(preds != y_test)])
-
-        avg_errors = np.append(avg_errors, np.mean(error))
-        max_errors = np.append(max_errors, np.max(error))
-        min_errors = np.append(min_errors, np.min(error))
-        print(i)
+    for m in range(1, 100, 25):
+        error_runs = [compute_error(1, m, x_test, y_test) for _ in range(10)]
+        avg = np.mean(error_runs)
+        avg_errors = np.append(avg_errors, avg)
+        max_errors = np.append(max_errors, np.max(error_runs))
+        min_errors = np.append(min_errors, np.min(error_runs))
+        print(f"m = {m}, Avg Error: {avg:.4f}")
 
     print('done')
     plt.errorbar(range(1, 100, 25), avg_errors, yerr=[np.array(avg_errors) - np.array(min_errors),
                                                       np.array(max_errors) - np.array(avg_errors)], fmt='-o')
+    plt.ylim(0, 1)
     plt.xlabel('Training Sample Size')
     plt.ylabel('Average Test Error')
     plt.title('Average Test Error vs. Training Sample Size')
+    plt.show()
+
+
+import numpy as np
+
+
+def corrupt(y):
+    """
+    Selects 30% of the labels and changes each one to a random label from the other classes.
+
+    Parameters:
+        y (array-like): Array of labels.
+
+    Returns:
+        numpy.ndarray: Array with 30% of the labels corrupted.
+    """
+    y = np.array(y)
+    unique_labels = np.unique(y)
+    n_to_corrupt = int(0.3 * len(y))
+
+    indices_to_corrupt = np.random.choice(len(y), n_to_corrupt, replace=False)
+    label_to_others = {label: unique_labels[unique_labels != label] for label in unique_labels}
+
+    new_labels = np.array([np.random.choice(label_to_others[y[idx]]) for idx in indices_to_corrupt])
+
+    y_corrupted = y.copy()
+    y_corrupted[indices_to_corrupt] = new_labels
+
+    return y_corrupted
+
+
+def plot_error_vs_k_corrupted(data, digits):
+    (x_test, y_test) = get_tests([data[f'test{k}'] for k in digits], digits)
+    y_test_corrupted = corrupt(y_test)
+    errors = []
+    for k in range(1, 11):
+        error_runs = [compute_error(k, 200, x_test, y_test, True) for _ in range(10)]
+        avg_error = np.mean(error_runs)
+        errors.append(avg_error)
+        print(f"k = {k}, Avg Error: {avg_error:.4f}")
+
+    plt.plot(range(1, 11), errors)
+    plt.ylim(0, 1)
+    plt.xlabel('k')
+    plt.ylabel('Average Test Error')
+    plt.title('Average Test Error vs. k')
     plt.show()
 
 
@@ -196,6 +231,7 @@ if __name__ == '__main__':
 
     data = np.load('mnist_all.npz')
     digits = [2,3,5,6]
+    plot_error_vs_m(data, digits)
     plot_error_vs_k(data, digits)
 
 
