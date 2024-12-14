@@ -211,7 +211,7 @@ def plot_error_vs_k_corrupted(data, digits):
     y_test_corrupted = corrupt(y_test)
     errors = []
     for k in range(1, 11):
-        error_runs = [compute_error(k, 200, x_test, y_test_corrupted, True) for _ in range(10)]
+        error_runs = [compute_error(k, 200, x_test, y_test, True) for _ in range(10)]
         avg_error = np.mean(error_runs)
         errors.append(avg_error)
         print(f"k = {k}, Avg Error: {avg_error:.4f}")
@@ -225,6 +225,7 @@ def plot_error_vs_k_corrupted(data, digits):
 
 
 if __name__ == '__main__':
+    # Load dataset
     data = np.load('mnist_all.npz')
     digits = [2, 3, 5, 6]
 
